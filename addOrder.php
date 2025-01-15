@@ -17,21 +17,21 @@ try {
         throw new Exception("Tous les champs doivent être remplis.");
     }
 
-    $stmt = $conn->prepare("INSERT INTO commandes (IDClient, IDProduit, quantite, total) VALUES (?, ?, ?, ?)");
-    if (!$stmt) {
-        throw new Exception("Erreur de préparation de la requête : " . $conn->error);
-    }
+    $stmt = $conn->prepare("INSERT INTO commandes (IDClient, statut) VALUES (?, 'En attente')");
+    $stmt->bind_param("i", $clientId);
+    $stmt->execute();
+    $orderId = $stmt->insert_id;
+    $stmt->close();
 
-    $stmt->bind_param("iiid", $clientId, $productId, $quantity, $totalPrice);
-    if (!$stmt->execute()) {
-        throw new Exception("Erreur lors de l'ajout de la commande : " . $stmt->error);
-    }
+    $stmt = $conn->prepare("INSERT INTO lignes_commande (IDCommande, IDProduit, quantite, totalligne) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("iiid", $orderId, $productId, $quantity, $totalPrice);
+    $stmt->execute();
+    $stmt->close();
 
     echo json_encode(["success" => "Commande ajoutée avec succès."]);
 } catch (Exception $e) {
     echo json_encode(["error" => $e->getMessage()]);
 } finally {
-    $stmt->close();
     $conn->close();
 }
 ?>
