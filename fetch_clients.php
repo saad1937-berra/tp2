@@ -1,19 +1,22 @@
 <?php
-// Connexion à la base de données
-include('config.php'); // Remplacez par le chemin vers votre fichier de connexion
+// fetch_clients.php
 
-$sql = "SELECT id, raisonsociale FROM clients";
-$result = $conn->query($sql);
+// Inclure la configuration de la base de données
+include 'config.php';
 
-// Vérifier si la requête a réussi
-if ($result) {
+// Requête pour récupérer les clients
+$query = "SELECT id, raisonsociale FROM clients";
+$result = mysqli_query($conn, $query);
+
+// Vérifiez si des clients existent
+if (mysqli_num_rows($result) > 0) {
     $clients = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = mysqli_fetch_assoc($result)) {
         $clients[] = $row;
     }
     // Retourner les clients en format JSON
     echo json_encode($clients);
 } else {
-    echo json_encode(['error' => 'Erreur lors de la récupération des clients.']);
+    echo json_encode([]);
 }
 ?>

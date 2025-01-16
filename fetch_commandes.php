@@ -1,14 +1,14 @@
 <?php
-// Connexion à la base de données
-include('config.php'); // Assurez-vous que ce fichier contient la connexion à la base de données
+include('config.php');
 header('Content-Type: application/json');
 
 // Récupérer les filtres depuis les paramètres GET
-$filtreClient = isset($_GET['client']) && $_GET['client'] !== '' ? $_GET['client'] : '';
+$filtreClient = isset($_GET['clientId']) && $_GET['clientId'] !== '' ? $_GET['clientId'] : '';
 $dateDebut = isset($_GET['dateDebut']) && $_GET['dateDebut'] !== '' ? $_GET['dateDebut'] : '';
 $dateFin = isset($_GET['dateFin']) && $_GET['dateFin'] !== '' ? $_GET['dateFin'] : '';
 $periode = isset($_GET['periode']) && $_GET['periode'] !== '' ? $_GET['periode'] : '';
-
+// Log pour afficher les paramètres reçus
+error_log('Filtres reçus: ' . print_r($_GET, true));  // Affiche les filtres dans le log
 // Construire la partie WHERE de la requête SQL en fonction des filtres
 $whereClauses = [];
 
@@ -29,7 +29,6 @@ if ($dateFin) {
 
 // Filtre période
 if ($periode) {
-    // Calculer les dates en fonction de la période et ajouter le filtre
     $today = date('Y-m-d');
     switch ($periode) {
         case 'today':
@@ -67,12 +66,14 @@ $sql = "
     JOIN lignes_commande lc ON c.IDCommande = lc.IDCommande
 ";
 
-// Ajouter les filtres à la requête SQL
+// Ajouter les filtres dynamiquement
 if (!empty($whereClauses)) {
     $sql .= " WHERE " . implode(" AND ", $whereClauses);
 }
 
 $sql .= " GROUP BY c.IDCommande";
+// Log de la requête SQL
+error_log('Requête SQL: ' . $sql);  // Affiche la requête SQL dans le log
 
 // Exécuter la requête SQL
 $result = $conn->query($sql);
@@ -83,6 +84,8 @@ if ($result) {
     while ($row = $result->fetch_assoc()) {
         $orders[] = $row;
     }
+    // Log pour vérifier la structure des données avant de les renvoyer
+    error_log(print_r($orders, true));  // Ajouter un log pour vérifier la structure des données
     // Retourner les résultats en format JSON
     echo json_encode($orders);
 } else {

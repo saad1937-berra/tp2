@@ -10,12 +10,28 @@ $clientId = isset($_POST['clientId']) ? $_POST['clientId'] : null;
 $numero = isset($_POST['numero']) ? $_POST['numero'] : null;
 $dateCommande = isset($_POST['datecommande']) ? $_POST['datecommande'] : null;
 $statut = isset($_POST['statut']) ? $_POST['statut'] : null;
-$produits = isset($_POST['produits']) ? $_POST['produits'] : null;
+$produits = isset($_POST['produits']) ? $_POST['produits'] : [];
 
 // Vérifier que toutes les informations nécessaires sont présentes
 if (empty($clientId) || empty($numero) || empty($dateCommande) || empty($statut) || empty($produits)) {
     echo json_encode(['status' => 'error', 'message' => 'Données manquantes']);
     exit();
+}
+
+// Générer le numéro de commande au format CMD-YYYY-XXXX
+$year = date('Y');
+$prefix = 'CMD-' . $year . '-';
+$lastOrderQuery = "SELECT numero FROM commandes WHERE numero LIKE '$prefix%' ORDER BY numero DESC LIMIT 1";
+$result = $conn->query($lastOrderQuery);
+
+$newOrderNumber = $prefix . '0001';  // Valeur par défaut si aucune commande n'existe pour cette année
+if ($result->num_rows > 0) {
+    // Récupérer le dernier numéro de commande et incrémenter le suffixe
+    $lastOrder = $result->fetch_assoc();
+    $lastOrderNumber = $lastOrder['numero'];
+    $suffix = substr($lastOrderNumber, -4);  // Récupérer les 4 derniers chiffres
+    $newSuffix = str_pad(intval($suffix) + 1, 4, '0', STR_PAD_LEFT);
+    $newOrderNumber = $prefix . $newSuffix;
 }
 
 // Préparer l'insertion dans la table commandes
@@ -29,7 +45,7 @@ if (!$stmtCommande) {
 }
 
 // Lier les paramètres et exécuter l'insertion de la commande
-$stmtCommande->bind_param("isss", $clientId, $numero, $dateCommande, $statut);
+$stmtCommande->bind_param("isss", $clientId, $newOrderNumber, $dateCommande, $statut);
 if ($stmtCommande->execute()) {
     // Récupérer l'ID de la commande insérée
     $idCommande = $stmtCommande->insert_id;
@@ -46,7 +62,7 @@ if ($stmtCommande->execute()) {
 
     // Insérer chaque ligne de commande
     foreach ($produits as $produit) {
-        $idProduit = $produit['productId']; // Utilisation de "productId" au lieu de "idProduit"
+        $idProduit = $produit['IDProduit']; // Utilisation de "IDProduit" au lieu de "idProduit"
         $quantite = $produit['quantity'];   // Utilisation de "quantity" au lieu de "quantite"
         $prix = $produit['prix'];
         $totalLigne = $prix * $quantite;

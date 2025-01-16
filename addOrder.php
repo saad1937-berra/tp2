@@ -9,11 +9,11 @@ try {
     }
 
     $clientId = isset($_POST['clientId']) ? intval($_POST['clientId']) : null;
-    $productId = isset($_POST['productId']) ? intval($_POST['productId']) : null;
+    $IDProduit = isset($_POST['IDProduit']) ? intval($_POST['IDProduit']) : null;
     $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : null;
     $totalPrice = isset($_POST['totalPrice']) ? floatval($_POST['totalPrice']) : null;
 
-    if (!$clientId || !$productId || !$quantity || !$totalPrice) {
+    if (!$clientId || !$IDProduit || !$quantity || !$totalPrice) {
         throw new Exception("Tous les champs doivent être remplis.");
     }
 
@@ -24,7 +24,7 @@ try {
     $stmt->close();
 
     $stmt = $conn->prepare("INSERT INTO lignes_commande (IDCommande, IDProduit, quantite, totalligne) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("iiid", $orderId, $productId, $quantity, $totalPrice);
+    $stmt->bind_param("iiid", $orderId, $IDProduit, $quantity, $totalPrice);
     $stmt->execute();
     $stmt->close();
 
